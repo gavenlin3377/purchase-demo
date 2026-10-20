@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>采购下单 - 下载配额信息原型</title>
+<style>
+  :root{
+    --mi-orange:#ff6700;
+    --mi-orange-hover:#f25807;
+    --blue:#2a7fff;
+    --text:#1a1a1a;
+    --text-2:#6b7280;
+    --text-3:#9ca3af;
+    --line:#ebedf0;
+    --line-2:#e5e7eb;
+    --bg:#f5f6f8;
+    --panel:#ffffff;
+    --red:#e8403a;
+    --nav-active-bg:#eef4ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",-apple-system,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;
+  }
+  /* 顶部导航条 */
+  .topbar{
+    height:56px;background:#fff;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:30;
+  }
+  .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;margin-right:40px;}
+  .logo .mi{width:28px;height:28px;background:var(--mi-orange);border-radius:6px;color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;}
+  .topnav{display:flex;gap:22px;font-size:14px;color:#333;overflow:hidden;flex:1;}
+  .topnav a{color:#333;text-decoration:none;white-space:nowrap;}
+  .topnav a.active{color:var(--mi-orange);font-weight:600;}
+  .topright{display:flex;align-items:center;gap:14px;color:#555;font-size:13px;}
+  .topright .sel{border:1px solid var(--line-2);border-radius:6px;padding:5px 10px;background:#fff;color:#444;}
+  .user{display:flex;align-items:center;gap:6px;}
+  .user .avatar{width:24px;height:24px;border-radius:50%;background:#d9e6ff;}
+  /* 布局 */
+  .layout{display:flex;align-items:flex-start;}
+  /* 侧边栏 */
+  .sidebar{width:188px;background:#fff;border-right:1px solid var(--line);min-height:calc(100vh - 56px);
+    padding:10px 0;flex-shrink:0;}
+  .menu-group{font-size:14px;}
+  .menu-item{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;color:#333;cursor:pointer;}
+  .menu-item:hover{background:#fafafa;}
+  .menu-item .ico{display:flex;align-items:center;gap:9px;}
+  .menu-item .ico::before{content:"⌂";color:#999;font-size:13px;}
+  .caret{color:#bbb;font-size:10px;}
+  .submenu .sub{padding:10px 20px 10px 48px;color:#555;cursor:pointer;}
+  .submenu .sub:hover{color:var(--mi-orange);}
+  .submenu .sub.active{background:var(--nav-active-bg);color:var(--mi-orange);font-weight:600;border-right:2px solid var(--mi-orange);}
+  /* 主区 */
+  .main{flex:1;padding:12px 22px 16px;min-width:0;}
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;}
+  .crumb{color:var(--text-2);font-size:13px;}
+  .crumb b{color:#333;font-weight:500;}
+  .funds{color:var(--text-2);font-size:13px;display:flex;gap:18px;align-items:baseline;flex-shrink:0;}
+  .funds .amt{color:#111;font-weight:600;font-size:14px;margin-left:4px;}
+  .funds .tag{color:var(--text-3);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:12px;}
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .card-title{font-size:16px;font-weight:600;}
+  .head-right{display:flex;align-items:center;gap:14px;}
+  .fmt-note{color:var(--text-3);font-size:12px;}
+  /* 按钮 */
+  .btn{border:1px solid var(--line-2);background:#fff;border-radius:7px;padding:7px 14px;font-size:13px;
+    cursor:pointer;color:#333;display:inline-flex;align-items:center;gap:6px;transition:.15s;}
+  .btn:hover{border-color:var(--mi-orange);color:var(--mi-orange);}
+  .btn .dl::before{content:"↓";font-weight:700;}
+  .btn-primary{background:var(--mi-orange);border-color:var(--mi-orange);color:#fff;}
+  .btn-primary:hover{background:var(--mi-orange-hover);color:#fff;}
+  .btn-ghost{background:#fff;color:#555;}
+  .btn-group{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+  .btn-row{display:flex;gap:10px;}
+  .note-row{color:var(--text-3);font-size:12px;}
+  /* 上传区 */
+  .dropzone{border:1.5px dashed #d6d9de;border-radius:10px;background:#fcfcfd;
+    padding:48px 20px;text-align:center;color:var(--text-2);cursor:pointer;transition:.15s;}
+  .dropzone:hover{border-color:var(--mi-orange);background:#fff8f3;}
+  .dropzone .cloud{font-size:40px;color:var(--mi-orange);}
+  .dropzone .t1{font-size:15px;color:#333;margin-top:10px;font-weight:500;}
+  .dropzone .t2{font-size:12px;color:var(--text-3);margin-top:6px;}
+  /* 空历史 */
+  .empty{padding:60px 0;text-align:center;color:var(--text-3);}
+  .empty.compact{padding:18px 0;}
+  .empty.compact .box{font-size:22px;opacity:.5;}
+  .empty.compact > div:last-child{margin-top:4px !important;font-size:13px;}
+  .empty .box{font-size:46px;opacity:.3;}
+  .link{color:var(--blue);text-decoration:none;font-size:13px;cursor:pointer;}
+  /* 弹窗 */
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50;}
+  .mask.show{display:flex;}
+  .modal{width:400px;background:#fff;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.18);}
+  .modal-head{padding:14px 18px;font-size:15px;font-weight:600;border-bottom:1px solid var(--line);
+    border-radius:12px 12px 0 0;
+    display:flex;justify-content:space-between;align-items:center;}
+  .modal-head .x{cursor:pointer;color:#999;font-size:18px;line-height:1;}
+  .modal-body{padding:18px;}
+  .field{margin-bottom:15px;}
+  .field label{display:block;font-size:13px;color:#333;margin-bottom:7px;}
+  .field label .req{color:var(--red);margin-right:2px;}
+  .select-box{border:1px solid var(--line-2);border-radius:8px;padding:9px 12px;min-height:42px;
+    display:flex;flex-wrap:wrap;gap:6px;align-items:center;cursor:pointer;position:relative;}
+  .select-box.err{border-color:var(--red);}
+  .select-box .ph{color:var(--text-3);font-size:13px;}
+  .chip{background:#eef4ff;color:#2a6fdb;border-radius:5px;padding:3px 8px;font-size:12px;display:inline-flex;gap:5px;align-items:center;}
+  .chip .rm{cursor:pointer;color:#86a9e0;}
+  .arrow{position:absolute;right:12px;color:#bbb;font-size:11px;}
+  .dropdown{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;
+    border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:5;max-height:220px;overflow:auto;}
+  .dropdown.show{display:block;}
+  .opt{padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;}
+  .opt:hover{background:#f6f8fc;}
+  .opt .ck{width:15px;height:15px;border:1px solid #c7ccd4;border-radius:3px;display:inline-flex;
+    align-items:center;justify-content:center;font-size:10px;color:#fff;}
+  .opt.sel .ck{background:var(--mi-orange);border-color:var(--mi-orange);}
+  .opt.sel .ck::after{content:"✓";}
+  .opt.all{border-bottom:1px solid var(--line);font-weight:500;}
+  .err-tip{color:var(--red);font-size:12px;margin-top:6px;display:none;}
+  .err-tip.show{display:block;}
+  /* 只看有配额：单选下拉 */
+  .select-box.single{cursor:pointer;}
+  .select-box.single .val{font-size:13px;color:#333;}
+  .opt-single{padding:9px 12px;cursor:pointer;font-size:13px;color:#333;}
+  .opt-single:hover{background:#f6f8fc;}
+  .opt-single.sel{color:var(--mi-orange);background:#fff8f3;}
+  /* 门店搜索输入 */
+  .search-input{border:none;outline:none;flex:1;min-width:120px;font-size:13px;color:#333;background:transparent;padding:2px 0;}
+  .search-input::placeholder{color:var(--text-3);}
+  .opt.hide{display:none;}
+  .no-result{padding:12px;text-align:center;color:var(--text-3);font-size:12px;}
+  .export-hint{background:#f8f9fb;border-radius:8px;padding:11px 14px;font-size:12px;color:var(--text-2);line-height:1.6;}
+  .ck-label.inline{font-size:13px;color:#333;}
+  .quota-field{margin-bottom:12px;}
+  /* 汇总条（单独一行） */
+  .pkg-summary{display:flex;align-items:center;gap:9px;background:#fff8f0;
+    border:1px solid #ffe2c2;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#8a5a1a;}
+  .pkg-summary .ps-ico{width:20px;height:20px;border-radius:50%;background:#ff9f40;color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+  .pkg-summary b{color:#d9730d;}
+  /* 操作行：全选 + 下单（下单靠最右） */
+  .pkg-actions{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .pkg-actions-right{display:flex;gap:10px;align-items:center;}
+  .ck-label{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#555;cursor:pointer;}
+  .ck{width:16px;height:16px;border:1px solid #c7ccd4;border-radius:3px;display:inline-flex;
+    align-items:center;justify-content:center;font-size:11px;color:#fff;}
+  .ck.sel{background:var(--mi-orange);border-color:var(--mi-orange);}
+  .ck.sel::after{content:"✓";}
+  .btn-primary:disabled{background:#f0c9a8;border-color:#f0c9a8;cursor:not-allowed;}
+  /* 门店行（可展开） */
+  .pkg-store{border:1px solid var(--line);border-radius:10px;margin-bottom:12px;overflow:hidden;}
+  .pkg-store-head{display:flex;align-items:center;padding:13px 16px;cursor:pointer;gap:12px;}
+  .pkg-store-head:hover{background:#fafbfc;}
+  .pkg-store-head .ps-ck{flex-shrink:0;}
+  .pkg-store-head .ps-caret{flex-shrink:0;color:#b0b4bb;font-size:12px;transition:transform .15s;}
+  .pkg-store.open .ps-caret{transform:rotate(90deg);}
+  .pkg-store-head .ps-name{flex:1;min-width:0;}
+  .pkg-store-head .ps-name b{font-size:14px;}
+  .pkg-store-head .ps-name .sid{color:var(--text-3);font-size:12px;margin-left:6px;}
+  .pkg-store-head .badge-ready{background:#e8f6ee;color:#1aab5a;border-radius:4px;padding:2px 8px;font-size:12px;flex-shrink:0;}
+  .pkg-store-head .ps-meta{color:var(--text-2);font-size:13px;flex-shrink:0;}
+  .pkg-store-head .ps-meta b{color:#111;}
+  .pkg-store-body{display:none;border-top:1px solid var(--line);}
+  .pkg-store.open .pkg-store-body{display:block;}
+  .ptable{width:100%;border-collapse:collapse;font-size:13px;}
+  .ptable th,.ptable td{padding:10px 12px;text-align:center;border-bottom:1px solid var(--line);}
+  .ptable th{color:var(--text-2);font-weight:500;background:#fafbfc;}
+  .ptable td.l{text-align:left;}
+  .ptable tr:last-child td{border-bottom:none;}
+  /* 清单准备中分组：折叠组 */
+  .pkg-preparing{margin-top:4px;border:1px dashed #d6dbe3;border-radius:10px;background:#fafbfc;overflow:hidden;}
+  .pkg-preparing-head{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;font-size:13px;color:#555;user-select:none;}
+  .pkg-preparing-head:hover{background:#f1f3f6;}
+  .pkg-preparing-head .pp-ico{font-size:14px;flex-shrink:0;}
+  .pkg-preparing-head .pp-text{flex:1;color:#555;}
+  .pkg-preparing-head .pp-text b{color:#333;font-weight:600;}
+  .pkg-preparing-head .pp-toggle{color:var(--blue);font-size:12px;flex-shrink:0;}
+  .pkg-preparing.open .pp-toggle::after{content:"";}
+  .pkg-preparing-body{display:none;border-top:1px dashed #d6dbe3;padding:10px 16px 12px;background:#fff;}
+  .pkg-preparing.open .pkg-preparing-body{display:block;}
+  .pp-list{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;}
+  .pp-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;}
+  .pp-item:last-child{border-bottom:none;}
+  .pp-item .pp-name{flex:1;min-width:0;color:#333;}
+  .pp-item .pp-name .sid{color:var(--text-3);font-size:12px;margin-left:6px;}
+  .pp-item .badge-prep{background:#eef1f5;color:#6b7280;border-radius:4px;padding:2px 8px;font-size:12px;flex-shrink:0;}
+  .pp-item .pp-open{color:var(--text-3);font-size:12px;flex-shrink:0;}
+  .pp-tip{margin-top:10px;font-size:12px;color:var(--text-3);line-height:1.6;}
+  /* 清单准备中：空态（待下单有数据，但没有准备中门店） */
+  .pkg-preparing-empty{margin-top:4px;border:1px dashed #e5e7eb;border-radius:10px;background:#fafbfc;
+    padding:12px 16px;font-size:13px;color:var(--text-3);display:flex;align-items:center;gap:10px;}
+  /* 下单确认弹窗 */
+  .confirm-body{display:flex;gap:12px;align-items:flex-start;padding:4px 0;}
+  .confirm-ico{width:22px;height:22px;border-radius:50%;background:#4a90e2;color:#fff;flex-shrink:0;
+    display:inline-flex;align-items:center;justify-content:center;font-style:italic;font-weight:700;font-size:13px;}
+  .confirm-main{font-size:14px;color:#333;}
+  .confirm-sub{font-size:12px;color:var(--text-2);margin-top:7px;line-height:1.6;}
+  /* 历史导入记录项 */
+  .hist-item{border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:10px;
+    display:flex;align-items:flex-start;gap:12px;}
+  .hist-item.processing{background:#fff8f0;border-color:#ffe2c2;}
+  .hist-ico{flex-shrink:0;margin-top:2px;}
+  .hist-ico .sp{width:16px;height:16px;border:2px solid #ffd9bf;border-top-color:var(--mi-orange);
+    border-radius:50%;display:inline-block;animation:spin .7s linear infinite;}
+  .hist-ico .ok{color:#1aab5a;font-size:18px;}
+  .hist-main{flex:1;min-width:0;}
+  .hist-title{font-size:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .hist-tag{border-radius:4px;padding:2px 8px;font-size:12px;}
+  .hist-tag.proc{background:#fff3e0;color:#d9730d;}
+  .hist-tag.ok{background:#e8f6ee;color:#1aab5a;}
+  .hist-meta{color:var(--text-2);font-size:12px;margin-top:6px;}
+  .hist-sub{color:var(--text-3);font-size:12px;margin-top:4px;}
+  .hist-right{flex-shrink:0;}
+  .btn-sm{padding:7px 16px;font-size:13px;border-radius:7px;cursor:pointer;border:1px solid var(--line-2);}
+  .btn-sm.proc{background:#f3f4f6;color:#9ca3af;border-color:#eceef0;cursor:default;}
+  .btn-sm.result{background:var(--mi-orange);color:#fff;border-color:var(--mi-orange);}
+  .modal-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;}
+  /* 导出进度 toast */
+  .toast{position:fixed;right:24px;bottom:24px;background:#fff;border:1px solid var(--line);
+    border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.14);padding:16px 18px;width:320px;z-index:60;
+    display:none;}
+  .toast.show{display:block;}
+  .toast .tt{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;}
+  .toast .spinner{width:15px;height:15px;border:2px solid #ffd9bf;border-top-color:var(--mi-orange);
+    border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .toast .desc{color:var(--text-2);font-size:12px;margin-top:8px;}
+  .toast .bar{height:5px;background:#f0f0f0;border-radius:3px;margin-top:12px;overflow:hidden;}
+  .toast .bar i{display:block;height:100%;width:0;background:var(--mi-orange);border-radius:3px;transition:width .3s;}
+  .toast.done .tt .spinner{display:none;}
+  .toast .ok{display:none;color:#1aab5a;}
+  .toast.done .ok{display:inline;}
+  .proto-badge{position:fixed;left:12px;bottom:12px;background:#333;color:#fff;font-size:11px;
+    padding:5px 10px;border-radius:6px;opacity:.7;z-index:70;}
+  .demo-toggle{position:fixed;left:12px;bottom:44px;background:#fff;border:1px solid var(--line-2);
+    color:#333;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;z-index:70;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .demo-toggle:hover{border-color:var(--mi-orange);color:var(--mi-orange);}
+  .demo-toggle b{color:var(--mi-orange);font-weight:600;}
+  /* 新店套包：单店下单按钮（靠最右） */
+  .pkg-store-head .ps-order{padding:5px 14px;font-size:12px;flex-shrink:0;}
+  /* 导入文件行（上传成功后展示的文件进度条） */
+  .import-file{display:flex;align-items:center;gap:14px;background:#f5fbf7;border:1px solid #d6ecd9;
+    border-radius:8px;padding:12px 16px;margin-top:14px;}
+  .import-file .if-ico{width:36px;height:36px;background:#e6f6ec;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;color:#1aab5a;font-size:18px;flex-shrink:0;}
+  .import-file .if-main{flex:1;min-width:0;}
+  .import-file .if-name{font-size:13px;color:#333;}
+  .import-file .if-bar{height:3px;background:#eef1f4;border-radius:2px;margin-top:8px;overflow:hidden;}
+  .import-file .if-bar i{display:block;height:100%;width:0;background:#1aab5a;border-radius:2px;transition:width .3s;}
+  .import-file .if-del{color:var(--red);font-size:13px;cursor:pointer;flex-shrink:0;}
+  /* 导入结果查看区 */
+  .ir-filters{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
+  .ir-field{display:flex;align-items:center;gap:8px;font-size:13px;flex:1;min-width:220px;}
+  .ir-field label{color:var(--text-2);white-space:nowrap;}
+  .ir-select{border:1px solid var(--line-2);border-radius:6px;padding:6px 10px;background:#fff;color:#9ca3af;flex:1;font-size:13px;min-width:0;}
+  .ir-actions{display:flex;gap:10px;margin-bottom:16px;}
+  .btn-danger-ghost{color:#e8403a;border-color:#f5c4c2;}
+  .ir-stats{display:flex;gap:16px;margin-bottom:16px;}
+  .ir-stat{flex:1;border:1px solid var(--line);border-radius:8px;padding:14px 18px;background:#fafbfc;}
+  .ir-stat .k{color:var(--text-2);font-size:12px;margin-bottom:6px;}
+  .ir-stat .v{font-size:22px;font-weight:700;color:#111;}
+  .ir-table-wrap{border:1px solid var(--line);border-radius:8px;overflow:auto;}
+  .ir-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+  .ir-table col.c-ck{width:44px;}
+  .ir-table col.c-store{width:180px;}
+  .ir-table col.c-sku{width:200px;}
+  .ir-table col.c-qty{width:92px;}
+  .ir-table col.c-num{width:96px;}
+  .ir-table col.c-op{width:60px;}
+  .ir-table th{color:var(--text-2);font-weight:500;background:#fafbfc;padding:12px 10px;
+    border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;}
+  .ir-table th.num,.ir-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .ir-table th.center,.ir-table td.center{text-align:center;}
+  .ir-table td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;
+    font-variant-numeric:tabular-nums;}
+  .ir-table tr:last-child td{border-bottom:none;}
+  /* 门店 / SKU 单元格：ID 加粗 + 名称副标，无边框 */
+  .ir-store .sid, .ir-sku .sid{font-size:13px;color:#1a1a1a;font-weight:500;line-height:1.4;}
+  .ir-store .sname, .ir-sku .sname{color:var(--text-3);font-size:12px;margin-top:4px;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .ir-store{background:#fafbfc;border-right:1px solid var(--line);}
+  .ir-store .store-err{color:var(--red);font-size:12px;margin-top:8px;line-height:1.5;}
+  /* 采购数量：轻量输入态样式 */
+  .ir-qty-input{border:1px solid var(--line-2);border-radius:6px;padding:5px 10px;background:#fff;
+    display:inline-flex;align-items:center;justify-content:flex-end;min-width:72px;font-size:13px;
+    font-variant-numeric:tabular-nums;}
+  .ir-table .err{color:var(--red);}
+  .ir-table .err-sub{color:var(--red);font-size:12px;margin-top:4px;}
+  .ir-table .del-ico{color:#e8403a;cursor:pointer;font-size:15px;}
+</style>
+</head>
+<body>
+
+<!-- 顶部 -->
+<div class="topbar">
+  <div class="logo"><span class="mi">MI</span> Xiaomi Retail</div>
+  <div class="topnav">
+    <a class="active">零售通工作台</a><a>文件管理</a><a>门店/阵地</a><a>零售学堂</a>
+    <a>运营</a><a>货品管理</a><a>零售人员工作台</a><a>库存管理</a><a>考勤</a><a>审批中心</a>
+    <a>消息中心</a><a>RMS临时入口</a><a>店员激励</a>
+  </div>
+  <div class="topright">
+    <span class="sel">中国香港 ▾</span>
+    <span class="sel">简体中文 ▾</span>
+    <span class="user"><span class="avatar"></span>林佳雯 ▾</span>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="menu-group">
+      <div class="menu-item"><span class="ico">销售达成</span><span class="caret">▾</span></div>
+      <div class="menu-item"><span class="ico">销售经营</span><span class="caret">▾</span></div>
+      <div class="menu-item"><span class="ico">采购管理</span><span class="caret">▴</span></div>
+      <div class="submenu">
+        <div class="sub active">采购下单</div>
+        <div class="sub">订单查询</div>
+        <div class="sub">流水查询</div>
+        <div class="sub">可用CN管理</div>
+        <div class="sub">对账单</div>
+      </div>
+      <div class="menu-item"><span class="ico">货品管理</span><span class="caret">▾</span></div>
+      <div class="menu-item"><span class="ico">授权店返利</span><span class="caret">▾</span></div>
+      <div class="menu-item"><span class="ico">操作中心</span><span class="caret"></span></div>
+      <div class="menu-item"><span class="ico">存量库存导入</span><span class="caret"></span></div>
+      <div class="menu-item"><span class="ico">价签管理</span><span class="caret">▾</span></div>
+    </div>
+  </aside>
+
+  <!-- 主区 -->
+  <main class="main">
+    <div class="page-head">
+      <div class="crumb">采购管理 / <b>采购下单</b></div>
+      <div class="funds">
+        <span>总余额 <span class="amt">HK$1,706,136,272.21</span></span>
+        <span class="tag">TT</span><span>HK$1,706,133,019.19</span>
+        <span class="tag">CN</span><span>HK$3,253.02</span>
+      </div>
+    </div>
+
+    <!-- 卡片1：新店套包（置顶，提示用户先下这些单） -->
+    <section class="card" id="pkgCard">
+      <div class="card-head">
+        <div class="card-title">新店套包清单</div>
+      </div>
+      <!-- 汇总条（单独一行） -->
+      <div class="pkg-summary" id="pkgSummary">
+        <span class="ps-ico">⚠</span>
+        <span id="pkgSummaryText">加载中…</span>
+      </div>
+      <!-- 操作行：全选 + 导出 + 批量下单（下单靠最右） -->
+      <div class="pkg-actions" id="pkgActions">
+        <label class="ck-label"><span class="ck" id="pkgSelAll"></span>全选</label>
+        <div class="pkg-actions-right">
+          <button class="btn" id="btnPkgExport"><span class="dl"></span>导出</button>
+          <button class="btn btn-primary" id="btnPkgOrder">下单（已选 <span id="pkgOrderCount">0</span> 家）</button>
+        </div>
+      </div>
+      <!-- 待下单门店列表（默认折叠，可展开看明细） -->
+      <div id="pkgList"></div>
+
+      <!-- 清单准备中：可折叠分组，默认收起；门店多时内部滚动 -->
+      <div class="pkg-preparing" id="pkgPreparing" style="display:none;">
+        <div class="pkg-preparing-head" id="pkgPreparingHead">
+          <span class="pp-ico">🕒</span>
+          <span class="pp-text">另有 <b id="pkgPreparingCount">0</b> 家门店的新店套包清单正在准备中</span>
+          <span class="pp-toggle" id="pkgPreparingToggle">展开 ▾</span>
+        </div>
+        <div class="pkg-preparing-body" id="pkgPreparingBody">
+          <div class="pp-list" id="pkgPreparingList"></div>
+        </div>
+      </div>
+      <!-- 清单准备中：空态（待下单有数据但准备中无） -->
+      <div class="pkg-preparing-empty" id="pkgPreparingEmpty" style="display:none;">
+        <span class="pp-ico">🕒</span>
+        <span>当前暂无准备中的新店套包；若有疑问请联系品类运营</span>
+      </div>
+
+      <!-- 无可下单套包的空态 -->
+      <div class="empty compact" id="pkgEmpty" style="display:none;">
+        <div class="box">📭</div>
+        <div style="margin-top:10px;">当前暂无可下单的新店套包；若有疑问请联系品类运营</div>
+      </div>
+      <!-- 全部下单完成后的空态 -->
+      <div class="empty compact" id="pkgDone" style="display:none;">
+        <div class="box">✅</div>
+        <div style="margin-top:10px;">所有新店套包已完成下单</div>
+      </div>
+    </section>
+
+    <!-- 卡片2：批量导入 -->
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">批量导入采购数据</div>
+        <div class="head-right">
+          <button class="btn" id="btnQuota"><span class="dl"></span>下载配额信息</button>
+          <button class="btn"><span class="dl"></span>下载模板</button>
+          <span class="fmt-note">格式: 门店ID / SKU ID / 采购数量</span>
+        </div>
+      </div>
+      <div class="dropzone" id="dropzone">
+        <div class="cloud">☁</div>
+        <div class="t1">点击上传或拖拽 Excel 文件到此处</div>
+        <div class="t2">支持 .xlsx / .xls / .csv 格式，文件大小不超过 10MB</div>
+      </div>
+      <!-- 上传文件进度（模拟） -->
+      <div class="import-file" id="importFile" style="display:none;">
+        <div class="if-ico">📄</div>
+        <div class="if-main">
+          <div class="if-name" id="importFileName">批量导入采购数据模板.xlsx</div>
+          <div class="if-bar"><i id="importFileBar"></i></div>
+        </div>
+        <span class="if-del" id="importFileDel">删除</span>
+      </div>
+
+      <!-- 导入结果查看区（上传完成后出现） -->
+      <div id="importResult" style="display:none;margin-top:22px;">
+        <div class="card-title" style="margin-bottom:14px;">导入结果查看</div>
+        <div class="ir-filters">
+          <div class="ir-field"><label>全部品类</label><div class="ir-select">请选择品类 ▾</div></div>
+          <div class="ir-field"><label>全部门店</label><div class="ir-select">请选择门店 ▾</div></div>
+          <div class="ir-field"><label>全部SKU</label><div class="ir-select">请选择SKU ▾</div></div>
+          <div class="ir-field"><label>只看错误数据</label><div class="ir-select">请选择 ▾</div></div>
+        </div>
+        <div class="ir-actions">
+          <button class="btn">添加新行</button>
+          <button class="btn btn-danger-ghost">批量删除</button>
+          <button class="btn btn-primary">下单</button>
+          <button class="btn">导出Excel</button>
+        </div>
+        <div class="ir-stats">
+          <div class="ir-stat"><div class="k">总金额</div><div class="v" id="irAmt">HK$0.00</div></div>
+          <div class="ir-stat"><div class="k">总采购数量</div><div class="v" id="irQty">0</div></div>
+          <div class="ir-stat"><div class="k">行数</div><div class="v" id="irRows">0</div></div>
+        </div>
+        <div class="ir-table-wrap">
+          <table class="ir-table">
+            <colgroup>
+              <col class="c-ck"><col class="c-store"><col class="c-sku">
+              <col class="c-qty"><col class="c-num"><col class="c-num">
+              <col class="c-num"><col class="c-num"><col class="c-num">
+              <col class="c-num"><col class="c-num"><col class="c-op">
+            </colgroup>
+            <thead><tr>
+              <th class="center"><span class="ck"></span></th>
+              <th>门店</th><th>SKU</th>
+              <th class="center">采购数量</th>
+              <th class="num">单价</th><th class="num">小计</th>
+              <th class="num">可用配额</th><th class="num">DOS</th>
+              <th class="num">在店</th><th class="num">在途</th><th class="num">28日均销</th>
+              <th class="center">操作</th>
+            </tr></thead>
+            <tbody id="irBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 卡片3：历史导入记录 -->
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">历史下单记录</div>
+        <div class="head-right">
+          <a class="link">查询订单详情</a>
+          <a class="link">⟳ 刷新</a>
+        </div>
+      </div>
+      <div class="empty" id="histEmpty">
+        <div class="box">📦</div>
+        <div style="margin-top:10px;">暂无历史记录</div>
+      </div>
+      <div id="histList"></div>
+    </section>
+  </main>
+</div>
+
+<!-- 导出弹窗 -->
+<div class="mask" id="mask">
+  <div class="modal">
+    <div class="modal-head">下载配额信息 <span class="x" id="btnClose">✕</span></div>
+    <div class="modal-body">
+      <!-- 门店（可输入搜索 + 多选） -->
+      <div class="field">
+        <label><span class="req">*</span>门店</label>
+        <div class="select-box" id="storeBox" data-type="store">
+          <input type="text" class="search-input" id="storeInput" placeholder="请输入或选择门店（可多选）" autocomplete="off">
+          <span class="arrow">▾</span>
+          <div class="dropdown" id="storeDrop">
+            <div class="opt all" data-val="__all__"><span class="ck"></span>全选</div>
+          </div>
+        </div>
+        <div class="err-tip" id="storeErr">请至少选择一个门店</div>
+      </div>
+      <!-- 品类（可输入搜索 + 多选） -->
+      <div class="field">
+        <label>品类（选填）</label>
+        <div class="select-box" id="catBox" data-type="cat">
+          <input type="text" class="search-input" id="catInput" placeholder="请输入或选择品类（可多选）" autocomplete="off">
+          <span class="arrow">▾</span>
+          <div class="dropdown" id="catDrop">
+            <div class="opt all" data-val="__all__"><span class="ck"></span>全选</div>
+          </div>
+        </div>
+      </div>
+      <!-- SKU/商品（可输入搜索 + 多选） -->
+      <div class="field">
+        <label>SKU / 商品（选填）</label>
+        <div class="select-box" id="skuBox" data-type="sku">
+          <input type="text" class="search-input" id="skuInput" placeholder="支持从 Excel 批量粘贴多个 SKU" autocomplete="off">
+          <span class="arrow">▾</span>
+          <div class="dropdown" id="skuDrop"></div>
+        </div>
+      </div>
+      <!-- 只看有配额：横排勾选 -->
+      <div class="field quota-field">
+        <label class="ck-label inline" id="quotaCkLabel">
+          <span class="ck sel" id="quotaCk"></span>只看有配额的商品
+        </label>
+      </div>
+      <div class="export-hint">
+        导出内容含商品、配额、库存等采购参考字段。
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="btnCancel">取消</button>
+      <button class="btn btn-primary" id="btnExport">导出</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新店套包下单二次确认弹窗 -->
+<div class="mask" id="pkgMask">
+  <div class="modal" style="width:400px;">
+    <div class="modal-head">提示 <span class="x" id="pkgClose">✕</span></div>
+    <div class="modal-body">
+      <div class="confirm-body">
+        <span class="confirm-ico">i</span>
+        <div>
+          <div class="confirm-main">采购单将自动支付，无法撤回，是否确认</div>
+          <div class="confirm-sub" id="pkgConfirmSub"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="pkgCancel">取消</button>
+      <button class="btn btn-primary" id="pkgConfirm">确认</button>
+    </div>
+  </div>
+</div>
+<!-- 导出进度 toast -->
+<div class="toast" id="toast">
+  <div class="tt">
+    <span class="spinner"></span><span class="ok">✓</span>
+    <span id="toastTitle">正在生成配额信息文件…</span>
+  </div>
+  <div class="desc" id="toastDesc">已提交导出任务，正在后台处理。</div>
+  <div class="bar"><i id="toastBar"></i></div>
+</div>
+
+<button class="demo-toggle" id="demoToggle">新店套包：<b id="demoToggleState">—</b> · 点击切换</button>
+<div class="proto-badge">原型 Demo · 配额下载 + 新店套包清单 · 数据为模拟</div>
+
+<script>
+// 模拟数据
+const STORES = [
+  {id:'SQHK00026', name:'Xiaomi Store 直营店1'},
+  {id:'SQHK00001', name:'小米之家香港油塘大本型'},
+  {id:'MIHK00038', name:'0114cc测试库存大于阈值5'},
+  {id:'MIHK00023', name:'1218-直营店测试-演示用'},
+  {id:'MISG76997', name:'Xiaomi Store2 Funan2 Singapore2'},
+  {id:'IDMI10001', name:'小米之家印尼Jakarta直营店'},
+  {id:'MIID77001', name:'Xiaomi Store Mall Ciputra Jakarta'},
+  {id:'MIMX00004', name:'墨西哥旺彤测试002'},
+];
+// SKU / 商品
+const SKUS = [
+  {id:'58232', name:'Xiaomi Flexible Rechargeable Lamp'},
+  {id:'50963', name:'Xiaomi Smart Electric Toothbrush T501 Replacement Heads'},
+  {id:'12356', name:'Xiaomi MIX Flip Purple 12+512'},
+  {id:'5751',  name:'17ProMaxPlusMegaUltra'},
+  {id:'25948', name:'25935-25948-25950 黑色'},
+  {id:'25935', name:'25935-25948-25950 白色'},
+  {id:'26212', name:'商品A(26212) 黑色LDU'},
+  {id:'25950', name:'25935-25948-25950 白色'},
+];
+
+// 新店套包门店（套包清单已准备好 / 待下单）；每店带套包清单明细
+const PKG_STORES = [
+  {id:'SQHK00088', name:'小米之家香港启德新店', openDate:'2025-12-24', items:[
+    {sku:'12356', name:'Xiaomi MIX Flip Purple 12+512', qty:5, price:12999, quota:5, dos:0, inStore:0, inTransit:0, avg28:0},
+    {sku:'26212', name:'商品A(26212) 黑色LDU',           qty:3, price:999,  quota:3, dos:0, inStore:0, inTransit:0, avg28:0},
+    {sku:'58232', name:'Xiaomi Flexible Rechargeable Lamp', qty:10, price:125, quota:10, dos:0, inStore:0, inTransit:0, avg28:0},
+  ]},
+  {id:'IDMI20005', name:'小米之家印尼万隆新店', openDate:'2026-01-15', items:[
+    {sku:'5751', name:'17ProMaxPlusMegaUltra',       qty:8, price:8999, quota:8, dos:0, inStore:0, inTransit:0, avg28:0},
+    {sku:'25948', name:'25935-25948-25950 黑色',      qty:6, price:101,  quota:6, dos:0, inStore:0, inTransit:0, avg28:0},
+  ]},
+  {id:'MIMY30012', name:'Xiaomi Store Johor 新店', openDate:'2026-02-01', items:[
+    {sku:'50963', name:'Xiaomi Smart Electric Toothbrush T501 Replacement Heads', qty:12, price:41, quota:12, dos:0, inStore:0, inTransit:0, avg28:0},
+    {sku:'25935', name:'25935-25948-25950 白色',      qty:4, price:100,  quota:4, dos:0, inStore:0, inTransit:0, avg28:0},
+    {sku:'25950', name:'25935-25948-25950 白色',      qty:4, price:102,  quota:4, dos:0, inStore:0, inTransit:0, avg28:0},
+  ]},
+];
+
+// 清单准备中的门店（品类运营尚未确认套包，不能下单，仅展示门店 ID / 名称 / 预计开业日期）
+const PKG_PREPARING_STORES = [
+  {id:'SQCN00105', name:'小米之家深圳前海新店',       openDate:'2026-03-10'},
+  {id:'SQCN00106', name:'小米之家上海徐汇滨江新店',   openDate:'2026-03-12'},
+  {id:'SQCN00107', name:'小米之家北京朝阳合生汇新店', openDate:'2026-03-15'},
+  {id:'MIMY30020', name:'Xiaomi Store KL Pavilion',   openDate:'2026-03-18'},
+  {id:'MIMY30021', name:'Xiaomi Store Penang Gurney', openDate:'2026-03-20'},
+  {id:'IDMI20010', name:'小米之家印尼泗水新店',       openDate:'2026-03-22'},
+  {id:'IDMI20011', name:'小米之家印尼棉兰新店',       openDate:'2026-03-25'},
+  {id:'MIMX00010', name:'Xiaomi Store Mexico Polanco',openDate:'2026-03-28'},
+  {id:'MIMX00011', name:'Xiaomi Store Guadalajara',   openDate:'2026-03-30'},
+  {id:'MITH40001', name:'Xiaomi Store Bangkok Siam',  openDate:'2026-04-02'},
+  {id:'MITH40002', name:'Xiaomi Store Chiang Mai',    openDate:'2026-04-05'},
+  {id:'MIVN50001', name:'Xiaomi Store Hanoi Vincom',  openDate:'2026-04-08'},
+  {id:'MIVN50002', name:'Xiaomi Store HCM District 1',openDate:'2026-04-10'},
+  {id:'MIPH60001', name:'Xiaomi Store Manila SM MOA', openDate:'2026-04-12'},
+  {id:'MIPH60002', name:'Xiaomi Store Cebu Ayala',    openDate:'2026-04-15'},
+];
+
+// 品类
+const CATEGORIES = [
+  'Eco Products','Environmental Appliances','Installation','New Retail Customized Products',
+  'Pad','Smart Phone','TV','TV Accessories','Value-Added Services','Wearables & Charging','White Appliances'
+];
+
+// 选中状态
+const sel = {quota:true, store:new Set(), cat:new Set(), sku:new Set()};
+const pkgSel = new Set();      // 列表中勾选的待下单门店 id
+const pkgOpen = new Set();     // 已展开明细的门店 id
+let pkgPending = [];           // 待下单门店 id 列表（下单成功后移除）
+let histSeq = 1837;            // 模拟 batchId 自增
+
+/* ========== 只看有配额：横排勾选框（默认勾选） ========== */
+document.getElementById('quotaCkLabel').addEventListener('click', ()=>{
+  sel.quota = !sel.quota;
+  document.getElementById('quotaCk').classList.toggle('sel', sel.quota);
+});
+
+/* ========== 门店：可输入搜索 + 多选 ========== */
+const storeDrop=document.getElementById('storeDrop');
+STORES.forEach(s=>{
+  const o=document.createElement('div');
+  o.className='opt'; o.dataset.val=s.id; o.dataset.text=(s.id+s.name).toLowerCase();
+  o.innerHTML='<span class="ck"></span>'+s.id+'-'+s.name;
+  storeDrop.appendChild(o);
+});
+const storeInput=document.getElementById('storeInput');
+storeInput.addEventListener('focus', ()=>openDrop(storeDrop));
+storeInput.addEventListener('input', ()=>{
+  const kw=storeInput.value.trim().toLowerCase();
+  let shown=0;
+  storeDrop.querySelectorAll('.opt:not(.all)').forEach(o=>{
+    const hit=!kw||o.dataset.text.includes(kw);
+    o.classList.toggle('hide', !hit); if(hit) shown++;
+  });
+  storeDrop.querySelector('.opt.all').classList.toggle('hide', !!kw);
+  openDrop(storeDrop);
+});
+storeDrop.addEventListener('click', e=>{
+  const opt=e.target.closest('.opt'); if(!opt) return;
+  e.stopPropagation();
+  const val=opt.dataset.val, set=sel.store, allVals=STORES.map(i=>i.id);
+  if(val==='__all__'){ set.size===allVals.length? set.clear() : allVals.forEach(v=>set.add(v)); }
+  else { set.has(val)? set.delete(val) : set.add(val); }
+  renderStoreChips(); renderStoreOptState();
+});
+function renderStoreOptState(){
+  const set=sel.store, allVals=STORES.map(i=>i.id);
+  storeDrop.querySelectorAll('.opt').forEach(o=>{
+    const v=o.dataset.val;
+    if(v==='__all__') o.classList.toggle('sel', set.size===allVals.length&&allVals.length>0);
+    else o.classList.toggle('sel', set.has(v));
+  });
+}
+function renderStoreChips(){
+  const box=document.getElementById('storeBox');
+  box.querySelectorAll('.chip').forEach(c=>c.remove());
+  [...sel.store].forEach(v=>{
+    const chip=document.createElement('span');
+    chip.className='chip';
+    chip.innerHTML=v+' <span class="rm" data-type="store" data-val="'+v+'">✕</span>';
+    box.insertBefore(chip, storeInput);
+  });
+  storeInput.placeholder = sel.store.size? '' : '请输入或选择门店（可多选）';
+  if(sel.store.size>0){ box.classList.remove('err'); document.getElementById('storeErr').classList.remove('show'); }
+}
+
+/* ========== 品类：可输入搜索 + 多选 ========== */
+const catDrop=document.getElementById('catDrop');
+CATEGORIES.forEach(c=>{
+  const o=document.createElement('div');
+  o.className='opt'; o.dataset.val=c; o.dataset.text=c.toLowerCase();
+  o.innerHTML='<span class="ck"></span>'+c;
+  catDrop.appendChild(o);
+});
+const catInput=document.getElementById('catInput');
+catInput.addEventListener('focus', ()=>openDrop(catDrop));
+catInput.addEventListener('input', ()=>{
+  const kw=catInput.value.trim().toLowerCase();
+  catDrop.querySelectorAll('.opt:not(.all)').forEach(o=>{
+    o.classList.toggle('hide', !!kw && !o.dataset.text.includes(kw));
+  });
+  catDrop.querySelector('.opt.all').classList.toggle('hide', !!kw);
+  openDrop(catDrop);
+});
+catDrop.addEventListener('click', e=>{
+  const opt=e.target.closest('.opt'); if(!opt) return;
+  e.stopPropagation();
+  const val=opt.dataset.val, set=sel.cat, allVals=CATEGORIES.slice();
+  if(val==='__all__'){ set.size===allVals.length? set.clear() : allVals.forEach(v=>set.add(v)); }
+  else { set.has(val)? set.delete(val) : set.add(val); }
+  renderCatChips(); renderCatOptState();
+});
+function renderCatOptState(){
+  const set=sel.cat, allVals=CATEGORIES;
+  catDrop.querySelectorAll('.opt').forEach(o=>{
+    const v=o.dataset.val;
+    if(v==='__all__') o.classList.toggle('sel', set.size===allVals.length && allVals.length>0);
+    else o.classList.toggle('sel', set.has(v));
+  });
+}
+function renderCatChips(){
+  const box=document.getElementById('catBox');
+  box.querySelectorAll('.chip').forEach(c=>c.remove());
+  [...sel.cat].forEach(v=>{
+    const chip=document.createElement('span');
+    chip.className='chip';
+    chip.innerHTML=v+' <span class="rm" data-type="cat" data-val="'+v+'">✕</span>';
+    box.insertBefore(chip, catInput);
+  });
+  catInput.placeholder = sel.cat.size? '' : '请输入或选择品类（可多选）';
+}
+
+/* ========== SKU / 商品：可输入搜索 + 多选 ========== */
+const skuDrop=document.getElementById('skuDrop');
+SKUS.forEach(s=>{
+  const o=document.createElement('div');
+  o.className='opt'; o.dataset.val=s.id; o.dataset.text=(s.id+s.name).toLowerCase();
+  o.innerHTML='<span class="ck"></span>'+s.id+' - '+s.name;
+  skuDrop.appendChild(o);
+});
+const skuInput=document.getElementById('skuInput');
+skuInput.addEventListener('focus', ()=>openDrop(skuDrop));
+skuInput.addEventListener('input', ()=>{
+  const kw=skuInput.value.trim().toLowerCase();
+  skuDrop.querySelectorAll('.opt').forEach(o=>{
+    o.classList.toggle('hide', !!kw && !o.dataset.text.includes(kw));
+  });
+  openDrop(skuDrop);
+});
+skuDrop.addEventListener('click', e=>{
+  const opt=e.target.closest('.opt'); if(!opt) return;
+  e.stopPropagation();
+  const val=opt.dataset.val, set=sel.sku;
+  set.has(val)? set.delete(val) : set.add(val);
+  renderSkuChips(); renderSkuOptState();
+});
+function renderSkuOptState(){
+  skuDrop.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel', sel.sku.has(o.dataset.val)));
+}
+function renderSkuChips(){
+  const box=document.getElementById('skuBox');
+  box.querySelectorAll('.chip').forEach(c=>c.remove());
+  [...sel.sku].forEach(v=>{
+    const chip=document.createElement('span'); chip.className='chip';
+    chip.innerHTML=v+' <span class="rm" data-type="sku" data-val="'+v+'">✕</span>';
+    box.insertBefore(chip, skuInput);
+  });
+  skuInput.placeholder = sel.sku.size? '' : '支持从 Excel 批量粘贴多个 SKU';
+}
+
+/* ========== 下拉开关 / chip 删除 / 外部关闭 ========== */
+function openDrop(drop){
+  document.querySelectorAll('.dropdown').forEach(d=>{if(d!==drop)d.classList.remove('show');});
+  drop.classList.add('show');
+}
+document.addEventListener('click', e=>{
+  if(e.target.classList.contains('rm')){
+    e.stopPropagation();
+    const t=e.target.dataset.type, v=e.target.dataset.val;
+    sel[t].delete(v);
+    if(t==='store'){ renderStoreChips(); renderStoreOptState(); }
+    else if(t==='cat'){ renderCatChips(); renderCatOptState(); }
+    else { renderSkuChips(); renderSkuOptState(); }
+  }
+});
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.select-box')) document.querySelectorAll('.dropdown').forEach(d=>d.classList.remove('show'));
+});
+
+/* ========== 弹窗开关 ========== */
+const mask=document.getElementById('mask');
+function openModal(){ mask.classList.add('show'); }
+function closeModal(){ mask.classList.remove('show'); }
+document.getElementById('btnQuota').addEventListener('click', openModal);
+document.getElementById('btnClose').addEventListener('click', closeModal);
+document.getElementById('btnCancel').addEventListener('click', closeModal);
+mask.addEventListener('click', e=>{ if(e.target===mask) closeModal(); });
+
+/* ========== 导出（校验：门店必填） ========== */
+document.getElementById('btnExport').addEventListener('click', ()=>{
+  if(sel.store.size===0){
+    document.getElementById('storeBox').classList.add('err');
+    document.getElementById('storeErr').classList.add('show');
+    return;
+  }
+  closeModal();
+  runExport();
+});
+
+function runExport(){
+  const toast=document.getElementById('toast');
+  const bar=document.getElementById('toastBar');
+  const title=document.getElementById('toastTitle');
+  const desc=document.getElementById('toastDesc');
+  toast.classList.remove('done'); toast.classList.add('show');
+  title.textContent='正在生成配额信息文件…';
+  const qtxt = sel.quota? '只看有配额' : '全部（含无配额）';
+  const scope = qtxt + '，' + sel.store.size + ' 个门店' +
+    (sel.cat.size? ('，'+sel.cat.size+' 个品类'):'') +
+    (sel.sku.size? ('，'+sel.sku.size+' 个 SKU'):'（全部 SKU）');
+  desc.textContent='导出范围：'+scope+'。已提交导出任务，正在后台处理。';
+  bar.style.width='0';
+  let p=0;
+  const timer=setInterval(()=>{
+    p+=Math.random()*22+8; if(p>100)p=100;
+    bar.style.width=p+'%';
+    if(p>=100){
+      clearInterval(timer);
+      toast.classList.add('done');
+      title.textContent='配额信息文件已生成';
+      desc.textContent='文件已开始下载：配额信息（'+scope+'）.xlsx（模拟）';
+      setTimeout(()=>toast.classList.remove('show'), 3500);
+    }
+  }, 400);
+}
+
+/* ========== 新店套包：待下单列表 + 下单 ========== */
+const pkgMask=document.getElementById('pkgMask');
+const pkgListEl=document.getElementById('pkgList');
+const money=n=>'HK$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+let pkgOrderTargets=[]; // 本次待确认下单的门店 id
+
+function storeSum(s){
+  return {
+    sku:s.items.length,
+    qty:s.items.reduce((a,b)=>a+b.qty,0),
+    amt:s.items.reduce((a,b)=>a+b.price*b.qty,0)
+  };
+}
+
+// 初始化：全部门店进入待下单（URL ?empty=1 或左下角按钮可切换到无数据空态）
+// 空态演示：4 种组合通过左下角按钮轮换
+// pending=有/无，preparing=有/无
+const DEMO_STATES = [
+  {pending:true,  preparing:true,  label:'待下单有 · 准备中有'},
+  {pending:true,  preparing:false, label:'待下单有 · 准备中无'},
+  {pending:false, preparing:true,  label:'待下单无 · 准备中有'},
+  {pending:false, preparing:false, label:'全部为空（整模块隐藏）'},
+];
+let demoStateIdx = (new URLSearchParams(location.search).get('empty')==='1') ? 3 : 0;
+function getDemoState(){ return DEMO_STATES[demoStateIdx]; }
+function applyDemoState(){
+  const st = getDemoState();
+  pkgPending = st.pending ? PKG_STORES.map(s=>s.id) : [];
+  pkgPrepList = st.preparing ? PKG_PREPARING_STORES : [];
+}
+let pkgPrepList = [];
+let pkgAllDone = false;  // true 表示由"用户下单"导致的清空，显示 ✅ 文案
+applyDemoState();
+
+function renderPkgList(){
+  const card=document.getElementById('pkgCard');
+  const summary=document.getElementById('pkgSummary');
+  const actions=document.getElementById('pkgActions');
+  const empty=document.getElementById('pkgEmpty');
+  const done=document.getElementById('pkgDone');
+  pkgListEl.innerHTML='';
+
+  const prepN = pkgPrepList.length;
+  const pendingN = pkgPending.length;
+  // 待下单与准备中均无 → 整个模块隐藏
+  if(pendingN===0 && prepN===0){
+    card.style.display='none';
+    return;
+  }
+  card.style.display='';
+
+  // 渲染准备中分区（空态/折叠组由其内部处理）
+  renderPkgPreparing();
+
+  // 待下单无数据：显示空态文案（下单清空 → ✅；初始无数据 → 📭）
+  if(pendingN===0){
+    summary.style.display='none'; actions.style.display='none'; pkgListEl.style.display='none';
+    if(pkgAllDone){ empty.style.display='none'; done.style.display=''; }
+    else { done.style.display='none'; empty.style.display=''; }
+    return;
+  }
+  // 待下单有数据：正常展示
+  summary.style.display='flex'; actions.style.display='flex'; pkgListEl.style.display='';
+  empty.style.display='none'; done.style.display='none';
+
+  // 汇总条
+  let tSku=0,tQty=0,tAmt=0;
+  pkgPending.forEach(id=>{ const s=PKG_STORES.find(x=>x.id===id); const d=storeSum(s); tSku+=d.sku; tQty+=d.qty; tAmt+=d.amt; });
+  document.getElementById('pkgSummaryText').innerHTML=
+    '当前有 <b>'+pkgPending.length+'</b> 家新店套包待下单，共 <b>'+tSku+'</b> 个 SKU、<b>'+tQty+'</b> 件商品、<b>'+money(tAmt)+'</b>，请确保所有订单在开业前完成下单';
+
+  // 门店行
+  pkgPending.forEach(id=>{
+    const s=PKG_STORES.find(x=>x.id===id); const d=storeSum(s);
+    const box=document.createElement('div');
+    box.className='pkg-store'+(pkgOpen.has(id)?' open':'');
+    box.dataset.id=id;
+    let rows='';
+    s.items.forEach(it=>{
+      rows+='<tr>'+
+        '<td class="l">'+it.sku+'</td>'+
+        '<td class="l">'+it.name+'</td>'+
+        '<td>'+it.qty+'</td>'+
+        '<td>'+money(it.price)+'</td>'+
+        '<td>'+money(it.price*it.qty)+'</td>'+
+        '</tr>';
+    });
+    box.innerHTML=
+      '<div class="pkg-store-head">'+
+        '<span class="ps-ck"><span class="ck'+(pkgSel.has(id)?' sel':'')+'" data-role="ck"></span></span>'+
+        '<span class="ps-caret">▶</span>'+
+        '<span class="ps-name"><b>'+s.name+'</b><span class="sid">'+id+'</span></span>'+
+        '<span class="badge-ready">待下单</span>'+
+        '<span class="ps-meta">'+d.sku+' SKU · <b>'+d.qty+'</b> 件 · <b>'+money(d.amt)+'</b></span>'+
+      '</div>'+
+      '<div class="pkg-store-body">'+
+        '<table class="ptable"><thead><tr>'+
+          '<th>SKU ID</th><th>SKU 名称</th><th>配额数量</th><th>单价</th><th>小计</th>'+
+        '</tr></thead><tbody>'+rows+'</tbody></table>'+
+      '</div>';
+    pkgListEl.appendChild(box);
+  });
+  updatePkgSel();
+}
+
+// 清单准备中：独立分区（折叠组），门店多时内部滚动；无数据时在待下单有数据场景下显示空态文案
+let pkgPreparingOpen = false;
+function renderPkgPreparing(){
+  const wrap=document.getElementById('pkgPreparing');
+  const emptyRow=document.getElementById('pkgPreparingEmpty');
+  const list=document.getElementById('pkgPreparingList');
+  const n=pkgPrepList.length;
+  const pendingN=pkgPending.length;
+  // 准备中有数据：显示折叠组
+  if(n>0){
+    emptyRow.style.display='none';
+    wrap.style.display='';
+    document.getElementById('pkgPreparingCount').textContent=n;
+    wrap.classList.toggle('open', pkgPreparingOpen);
+    document.getElementById('pkgPreparingToggle').textContent = pkgPreparingOpen? '收起 ▴' : '展开 ▾';
+    list.innerHTML='';
+    pkgPrepList.forEach(s=>{
+      const row=document.createElement('div');
+      row.className='pp-item';
+      row.innerHTML=
+        '<span class="pp-name">'+s.name+'<span class="sid">'+s.id+'</span></span>'+
+        '<span class="pp-open">预计开业 '+s.openDate+'</span>'+
+        '<span class="badge-prep">准备中</span>';
+      list.appendChild(row);
+    });
+    return;
+  }
+  // 准备中无数据：仅当待下单有数据时才显示空态文案；否则（两者都无）由外层隐藏整张卡片
+  wrap.style.display='none';
+  emptyRow.style.display = pendingN>0? 'flex' : 'none';
+}
+document.getElementById('pkgPreparingHead').addEventListener('click', ()=>{
+  pkgPreparingOpen = !pkgPreparingOpen;
+  renderPkgPreparing();
+});
+
+// 列表交互：勾选 / 展开
+pkgListEl.addEventListener('click', e=>{
+  const box=e.target.closest('.pkg-store'); if(!box) return;
+  const id=box.dataset.id;
+  if(e.target.closest('[data-role="ck"]')){
+    pkgSel.has(id)? pkgSel.delete(id) : pkgSel.add(id);
+    updatePkgSel(); return;
+  }
+  // 其余点击 = 展开/收起
+  pkgOpen.has(id)? pkgOpen.delete(id) : pkgOpen.add(id);
+  box.classList.toggle('open', pkgOpen.has(id));
+});
+
+function updatePkgSel(){
+  pkgListEl.querySelectorAll('.pkg-store').forEach(box=>{
+    const id=box.dataset.id;
+    box.querySelector('[data-role="ck"]').classList.toggle('sel', pkgSel.has(id));
+  });
+  document.getElementById('pkgOrderCount').textContent=pkgSel.size;
+  const all=pkgPending.length;
+  document.getElementById('pkgSelAll').classList.toggle('sel', pkgSel.size===all && all>0);
+  document.getElementById('btnPkgOrder').disabled = pkgSel.size===0;
+}
+// 全选
+document.getElementById('pkgSelAll').closest('.ck-label').addEventListener('click', ()=>{
+  if(pkgSel.size===pkgPending.length){ pkgSel.clear(); } else { pkgPending.forEach(id=>pkgSel.add(id)); }
+  updatePkgSel();
+});
+// 批量下单
+document.getElementById('btnPkgOrder').addEventListener('click', ()=>{
+  if(pkgSel.size===0) return;
+  askOrder([...pkgSel]);
+});
+// 导出新店套包清单
+document.getElementById('btnPkgExport').addEventListener('click', ()=>{
+  const toast=document.getElementById('toast');
+  const bar=document.getElementById('toastBar');
+  const title=document.getElementById('toastTitle');
+  const desc=document.getElementById('toastDesc');
+  toast.classList.remove('done'); toast.classList.add('show');
+  title.textContent='正在生成新店套包清单…';
+  desc.textContent='导出范围：'+pkgPending.length+' 家待下单门店套包。';
+  bar.style.width='0';
+  let p=0;
+  const timer=setInterval(()=>{
+    p+=Math.random()*25+10; if(p>100) p=100;
+    bar.style.width=p+'%';
+    if(p>=100){
+      clearInterval(timer);
+      toast.classList.add('done');
+      title.textContent='新店套包清单已生成';
+      desc.textContent='文件已开始下载：新店套包清单.xlsx（模拟）';
+      setTimeout(()=>toast.classList.remove('show'), 3000);
+    }
+  },300);
+});
+
+// 下单二次确认
+function askOrder(ids){
+  pkgOrderTargets=ids;
+  let n=0,amt=0;
+  ids.forEach(id=>{ const d=storeSum(PKG_STORES.find(x=>x.id===id)); n+=d.sku; amt+=d.amt; });
+  document.getElementById('pkgConfirmSub').innerHTML=
+    '<span style="color:var(--red);">资金余额不足，请充值</span>';
+  pkgMask.classList.add('show');
+}
+function closePkgMask(){ pkgMask.classList.remove('show'); }
+document.getElementById('pkgClose').addEventListener('click', closePkgMask);
+document.getElementById('pkgCancel').addEventListener('click', closePkgMask);
+pkgMask.addEventListener('click', e=>{ if(e.target===pkgMask) closePkgMask(); });
+document.getElementById('pkgConfirm').addEventListener('click', ()=>{
+  closePkgMask();
+  submitOrder(pkgOrderTargets);
+});
+
+// 提交下单：从待下单移除 → 历史记录加「处理中」→ 变「全部成功」
+function submitOrder(ids){
+  const stores=ids.map(id=>PKG_STORES.find(x=>x.id===id)).filter(Boolean);
+  let sku=0,amt=0; stores.forEach(s=>{const d=storeSum(s); sku+=d.sku; amt+=d.amt;});
+  // 从待下单列表移除
+  pkgPending=pkgPending.filter(id=>!ids.includes(id));
+  ids.forEach(id=>pkgSel.delete(id));
+  if(pkgPending.length===0) pkgAllDone = true;
+  renderPkgList();
+  // 若已导入列表存在"门店未完成新店套包"错误，且被下单的门店刚好在其中，则清除错误
+  refreshImportStoreError();
+  // 历史记录
+  addHistory({stores:stores.length, sku, amt});
+}
+
+function addHistory({stores, sku, amt}){
+  histSeq++;
+  document.getElementById('histEmpty').style.display='none';
+  const list=document.getElementById('histList');
+  const now=new Date();
+  const ts=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+
+    String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  const item=document.createElement('div');
+  item.className='hist-item processing';
+  item.innerHTML=
+    '<div class="hist-ico"><span class="sp"></span></div>'+
+    '<div class="hist-main">'+
+      '<div class="hist-title">新店套包一键下单 (batchId: '+histSeq+') <span class="hist-tag proc">处理中</span></div>'+
+      '<div class="hist-meta">'+ts+' 订单处理中，预计 1 分钟完成，'+stores+' 家门店，'+sku+' 个 SKU，'+money(amt)+'</div>'+
+      '<div class="hist-sub">订单处理中，预计 1 分钟完成</div>'+
+    '</div>'+
+    '<div class="hist-right"><button class="btn-sm proc">处理中</button></div>';
+  list.insertBefore(item, list.firstChild);
+  // 模拟处理完成
+  setTimeout(()=>{
+    item.classList.remove('processing');
+    item.querySelector('.hist-ico').innerHTML='<span class="ok" style="color:#d9730d;">!</span>';
+    item.querySelector('.hist-title').innerHTML=
+      '新店套包一键下单 (batchId: '+histSeq+') <span class="hist-tag" style="background:#fff3e0;color:#d9730d;">部分成功</span>';
+    item.querySelector('.hist-meta').innerHTML=ts+'，'+stores+' 家门店，'+sku+' 个 SKU，'+money(amt)+
+      ' <span style="color:var(--red);font-size:12px;margin-left:8px;">余额不足，部分订单扣款失败，请及时充值</span>';
+    item.querySelector('.hist-sub').remove();
+    item.querySelector('.hist-right').innerHTML='<button class="btn-sm result">下单结果</button>';
+  }, 2200);
+}
+
+// 首次渲染
+renderPkgList();
+
+// 左下角切换：4 态轮换（待下单有/无 × 准备中有/无）
+const demoToggleState=document.getElementById('demoToggleState');
+function syncDemoToggle(){ demoToggleState.textContent = getDemoState().label; }
+syncDemoToggle();
+document.getElementById('demoToggle').addEventListener('click', ()=>{
+  demoStateIdx = (demoStateIdx+1) % DEMO_STATES.length;
+  applyDemoState();
+  pkgSel.clear(); pkgOpen.clear();
+  pkgAllDone = false;  // 切换数据场景时重置"下单完成"状态
+  syncDemoToggle();
+  renderPkgList();
+  refreshImportStoreError();
+});
+
+/* ========== 模拟导入：点击 dropzone → 文件进度 → 导入结果 ========== */
+// 导入数据：故意包含两家新店套包未下单的门店，用于演示红字提示
+const IMPORT_ROWS = [
+  // SQHK00088 命中新店套包未下单
+  {storeId:'SQHK00088', storeName:'小米之家香港启德新店', sku:'12356', skuName:'Xiaomi MIX Flip Purple 12+512', qty:1, price:12999, quota:94,  dos:2406.94, inStore:2,  inTransit:10059, avg28:4.18, err:null},
+  {storeId:'SQHK00088', storeName:'小米之家香港启德新店', sku:'5751',  skuName:'17ProMaxPlusMegaUltra',          qty:50,price:null,  quota:0,   dos:0,       inStore:0,  inTransit:0,     avg28:4.18, err:'quota'},
+  // IDMI20005 命中新店套包未下单
+  {storeId:'IDMI20005', storeName:'小米之家印尼万隆新店', sku:'25948', skuName:'25935-25948-25950 黑色',          qty:100,price:101,   quota:491, dos:0,       inStore:0,  inTransit:11,    avg28:0,    err:null},
+  // 普通门店（无新店套包问题）
+  {storeId:'SQHK00001', storeName:'小米之家香港油塘大本型', sku:'25935', skuName:'25935-25948-25950 白色',       qty:1,  price:100,   quota:990, dos:0,       inStore:0,  inTransit:13,    avg28:0,    err:null},
+  {storeId:'SQHK00001', storeName:'小米之家香港油塘大本型', sku:'26212', skuName:'商品A(26212) 黑色LDU',          qty:1,  price:99,    quota:906, dos:572.01,  inStore:11, inTransit:2380,  avg28:4.18, err:null},
+  {storeId:'SQHK00001', storeName:'小米之家香港油塘大本型', sku:'25950', skuName:'25935-25948-25950 白色',       qty:1,  price:102,   quota:1497,dos:0,       inStore:0,  inTransit:8,     avg28:0,    err:null},
+];
+
+const dropzone=document.getElementById('dropzone');
+const importFile=document.getElementById('importFile');
+const importFileBar=document.getElementById('importFileBar');
+const importFileDel=document.getElementById('importFileDel');
+const importResult=document.getElementById('importResult');
+const irBody=document.getElementById('irBody');
+
+dropzone.addEventListener('click', ()=>{
+  if(importFile.style.display!=='none') return; // 已在上传中
+  // 模拟选择文件
+  importFile.style.display='flex';
+  importFileBar.style.width='0';
+  importResult.style.display='none';
+  let p=0;
+  const timer=setInterval(()=>{
+    p+=Math.random()*25+12; if(p>100) p=100;
+    importFileBar.style.width=p+'%';
+    if(p>=100){
+      clearInterval(timer);
+      // 展示导入结果
+      renderImportResult();
+    }
+  },180);
+});
+importFileDel.addEventListener('click', ()=>{
+  importFile.style.display='none';
+  importResult.style.display='none';
+  importFileBar.style.width='0';
+});
+
+function renderImportResult(){
+  importResult.style.display='';
+  // 按门店聚合，使同一门店的多行合并显示门店格 + rowspan
+  const groups=[];
+  const byStore={};
+  IMPORT_ROWS.forEach(r=>{
+    if(!byStore[r.storeId]){ byStore[r.storeId]={id:r.storeId, name:r.storeName, rows:[]}; groups.push(byStore[r.storeId]); }
+    byStore[r.storeId].rows.push(r);
+  });
+  irBody.innerHTML='';
+  let totalAmt=0, totalQty=0, totalRows=0;
+  groups.forEach(g=>{
+    const pending = pkgPending.includes(g.id); // 该门店是否仍是未完成新店套包
+    g.rows.forEach((r,idx)=>{
+      totalRows++; totalQty+=r.qty||0;
+      const subtotal = (r.price!=null)? r.price*r.qty : null;
+      if(subtotal!=null) totalAmt+=subtotal;
+      const tr=document.createElement('tr');
+      const storeCell='<td class="ir-store" data-store-id="'+g.id+'">'+
+        '<div class="sid">'+g.id+'</div>'+
+        '<div class="sname">'+g.name+'</div>'+
+        (pending? '<div class="store-err">请先在顶部的 <b>新店套包清单</b> 模块完成下单</div>' : '')+
+        '</td>';
+      let priceTxt, subTxt, quotaTxt;
+      if(pending){
+        // 新店套包未下单的门店：只显示门店红字，不再逐格展示 GTM 报价 / 配额不足等异常
+        priceTxt = (r.price==null)? '—' : 'HK$'+r.price.toFixed(2);
+        subTxt   = (subtotal==null)? '—' : 'HK$'+subtotal.toFixed(2);
+        quotaTxt = (r.err==='quota')? '—' : r.quota;
+      } else {
+        priceTxt = (r.price==null)? '<span class="err">请联系GTM报价</span>' : 'HK$'+r.price.toFixed(2);
+        subTxt   = (subtotal==null)? '<span class="err">请联系GTM报价</span>' : 'HK$'+subtotal.toFixed(2);
+        quotaTxt = (r.err==='quota')? '0<div class="err-sub">配额不足</div>' : r.quota;
+      }
+      tr.innerHTML=
+        '<td class="center"><span class="ck"></span></td>'+
+        storeCell+
+        '<td class="ir-sku"><div class="sid">'+r.sku+'</div><div class="sname">'+r.skuName+'</div></td>'+
+        '<td class="center"><span class="ir-qty-input">'+r.qty+'</span></td>'+
+        '<td class="num">'+priceTxt+'</td>'+
+        '<td class="num">'+subTxt+'</td>'+
+        '<td class="num">'+quotaTxt+'</td>'+
+        '<td class="num">'+r.dos+'</td>'+
+        '<td class="num">'+r.inStore+'</td>'+
+        '<td class="num">'+r.inTransit+'</td>'+
+        '<td class="num">'+r.avg28+'</td>'+
+        '<td class="center"><span class="del-ico">🗑</span></td>';
+      irBody.appendChild(tr);
+    });
+  });
+  document.getElementById('irAmt').textContent='HK$'+totalAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('irQty').textContent=totalQty;
+  document.getElementById('irRows').textContent=totalRows;
+}
+
+// 新店套包完成下单后刷新错误提示
+function refreshImportStoreError(){
+  if(importResult.style.display==='none') return;
+  irBody.querySelectorAll('.ir-store').forEach(td=>{
+    const id=td.dataset.storeId;
+    const err=td.querySelector('.store-err');
+    if(!pkgPending.includes(id) && err) err.remove();
+  });
+}
+</script>
+</body>
+</html>
