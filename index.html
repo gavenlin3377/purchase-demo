@@ -161,6 +161,8 @@
   .pkg-store-head .ps-name{flex:1;min-width:0;}
   .pkg-store-head .ps-name b{font-size:14px;}
   .pkg-store-head .ps-name .sid{color:var(--text-3);font-size:12px;margin-left:6px;}
+  .pkg-store-head .ps-name .ps-open-date{color:var(--text-2);font-size:12px;margin-top:4px;}
+  .pkg-store-head .ps-name .ps-open-date::before{content:"🕒 ";}
   .pkg-store-head .badge-ready{background:#e8f6ee;color:#1aab5a;border-radius:4px;padding:2px 8px;font-size:12px;flex-shrink:0;}
   .pkg-store-head .ps-meta{color:var(--text-2);font-size:13px;flex-shrink:0;}
   .pkg-store-head .ps-meta b{color:#111;}
@@ -936,7 +938,9 @@ function renderPkgList(){
       '<div class="pkg-store-head">'+
         '<span class="ps-ck"><span class="ck'+(pkgSel.has(id)?' sel':'')+'" data-role="ck"></span></span>'+
         '<span class="ps-caret">▶</span>'+
-        '<span class="ps-name"><b>'+s.name+'</b><span class="sid">'+id+'</span></span>'+
+        '<span class="ps-name"><b>'+s.name+'</b><span class="sid">'+id+'</span>'+
+          (s.openDate? '<div class="ps-open-date">预计开业 '+s.openDate+'</div>' : '')+
+        '</span>'+
         '<span class="badge-ready">待下单</span>'+
         '<span class="ps-meta">'+d.sku+' SKU · <b>'+d.qty+'</b> 件 · <b>'+money(d.amt)+'</b></span>'+
       '</div>'+
